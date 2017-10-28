@@ -4,12 +4,21 @@ const request = require('supertest');
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
 
-// This runs before each test making sure the data base is empty
-// before each test.
+var toDos =[ 
+{
+    text: 'First test todo'
+},
+{
+    text: 'Second test todo'
+}];
+
+// This runs before each test making sure the data base has two toDos (the above created array).
 beforeEach((done) => {
-    Todo.remove({}).then(() => {
+    Todo.remove({}).then( () => {
+        return Todo.insertMany(toDos);
+    }).then( ()=> {
         done();
-    })
+    });
 });
 
 describe('POST/todos', ()=> {
@@ -31,7 +40,7 @@ describe('POST/todos', ()=> {
                 return done(error); // return because we don't want any following lines to execute
             }
 
-            Todo.find().then( (todos) => {
+            Todo.find({text}).then( (todos) => {     // The find finds only the toDo in the collection matching the above created text
                 expect(todos.length).toBe(1);
                 expect(todos[0].text).toBe(text);
                 done();
@@ -52,9 +61,21 @@ describe('POST/todos', ()=> {
             }
 
             Todo.find().then( (todos) => {
-                expect(todos.length).toBe(0);
+                expect(todos.length).toBe(2);
                 done();
             }).catch( (e) => done(e) ); // one line expression syntax
         } );
     });
-})
+});
+
+describe('GET/todos', ()=> {
+   it ('should get all todos', (done) => {
+       request(app)
+       .get('/todos')
+       .expect(200)
+       .expect( (res)=> {
+           expect(res.body.todos.length).toBe(2);
+       })
+       .end(done);
+   });
+});

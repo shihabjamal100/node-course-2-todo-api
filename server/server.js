@@ -43,6 +43,28 @@ app.get('/todos/:id', (req, res) => {
     Todo.findById(id).then( (todo) => {
         if (!todo)
         {
+            // NOTE: findById can return success even if it hasn't found a matching
+            // todo. That's why we need this if check.
+            return res.status(404).send();
+        }
+
+        res.send({todo});
+    }).catch((error) => res.status(400).send());
+});
+
+app.delete('/todos/:id', (req, res) => {
+    var id = req.params.id;
+
+    if (!ObjectID.isValid(id))
+    {
+        return res.status(404).send();
+    }
+
+    Todo.findByIdAndRemove(id).then( (todo) => {
+        if (!todo)
+        {
+            // NOTE: findByIdAndRemove can return success even if it hasn't found a matching
+            // todo. That's why we need this if check.
             return res.status(404).send();
         }
 

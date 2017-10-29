@@ -108,3 +108,49 @@ describe('GET/todos/:id', ()=> {
         .end(done);
     });
 });
+
+describe('DELETE:/todos/:id', () => {
+    it ('should delete a to do', (done) => {
+        var id = toDos[0]._id.toHexString();
+
+        request(app)
+        .delete(`/todos/${id}`)
+        .expect(200)
+        .expect( (res) => {
+            expect(res.body.todo).toInclude(toDos[0]);
+        })
+        .end( (err, res) => {
+            if (err)
+            {
+                return done(err);
+            }
+     
+            // NOW TRY TO GET THE DELETED ITEM AND MAKE SURE IT FAILS.
+
+            // MY WAY OF DOING IT
+            /* request(app)
+            .get(`/todos/${id}`)
+            .expect(404); */
+
+            // THEIR WAY OF DOINNG IT
+            Todo.findById(id).then( (todo) => {
+                expect(todo).toNotExist();
+                done();
+            }).catch( (e) => done(e));
+        } );
+    });
+
+    it ('should return a 404 if todo not found', (done) => {
+        request(app)
+        .delete(`/todos/${(new ObjectID()).toHexString()}`)
+        .expect(404)
+        .end(done);
+    });
+
+    it ('should return a 404 for non object IDs', (done) => {
+        request(app)
+        .delete('/todos/123')
+        .expect(404)
+        .end(done);
+    });
+});

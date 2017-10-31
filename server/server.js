@@ -16,6 +16,7 @@ const port = process.env.PORT;
 
 app.use(bodyParser.json())
 
+//============TODO ROUTES===================
 app.post('/todos', (req, res) => {
     var todo = new Todo({
         text: req.body.text
@@ -104,6 +105,20 @@ app.patch('/todos/:id', (req, res) => {
         res.send({todo});
     }).catch((error) => {
         res.status(404).send();
+    });
+});
+
+//========== USERS ROUTES ===================
+
+app.post('/users/', (req, res) => {
+    var user = new User( _.pick(req.body, ['email', 'password']) );
+
+    user.save().then( () => {
+        return user.generateAuthToken();
+    }).then( (token) => {
+        res.header('x-auth', token).send(user);     // in http anything with x- means custom header. We are adding a x-auth custom defined header
+    }).catch((error) => {
+        res.status(400).send(error);
     });
 });
 

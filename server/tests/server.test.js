@@ -12,7 +12,9 @@ var toDos =[
 },
 {
     _id: new ObjectID(),
-    text: 'Second test todo'
+    text: 'Second test todo',
+    completed: true,
+    completedAt: 333
 }];
 
 // This runs before each test making sure the data base has two toDos (the above created array).
@@ -151,6 +153,46 @@ describe('DELETE:/todos/:id', () => {
         request(app)
         .delete('/todos/123')
         .expect(404)
+        .end(done);
+    });
+});
+
+describe('PATCH/rodo/:id', () => {
+    it ('should update a todo', (done) => {
+        var id = toDos[0]._id.toHexString();
+        var update = {
+            text: 'Updated text',
+            completed: true,
+        };
+
+        request(app)
+        .patch(`/todos/${id}`)
+        .send(update)
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.todo.text).toBe(update.text);
+            expect(res.body.todo.completed).toBe(true);
+            expect(res.body.todo.completedAt).toBeA('number');
+        })
+        .end(done);
+    });
+
+    it ('should clear completed at when todo not completed', (done)=> {
+        var id = toDos[1]._id.toHexString();
+        var update = {
+            text: 'Updated text',
+            completed: false
+        };
+
+        request(app)
+        .patch(`/todos/${id}`)
+        .send(update)
+        .expect(200)
+        .expect((res) => {
+            expect(res.body.todo.text).toBe(update.text);
+            expect(res.body.todo.completed).toBe(false);
+            expect(res.body.todo.completedAt).toBe(null); // toNotExist also ok
+        })
         .end(done);
     });
 });

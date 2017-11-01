@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 var UserSchema = new mongoose.Schema({
     email: {
@@ -84,6 +85,29 @@ UserSchema.statics.findByToken = function (token) {    // this is a static metho
         'tokens.access': 'auth'
     });
 }
+
+// See Mongoose middleware documentation.
+UserSchema.pre('save', function (next) {
+    var user = this;
+
+    // Note we only want to hash the password once. So if a new user is saved, we hash the password for
+    // the first time. Then if another property of the user is updated (like e-mail) and it is not the
+    // password we do not want to hash the password again because it is already hashed. So we check if 
+    // the password is actually modified before hashing.
+    if (user.isModified('password'))
+    {
+        bcrypt.genSalt(10, (err, salt) => {
+            bcrypt.hash(user.password, salt, (err, hash) => {
+                user.password = hash;
+                next();
+            });
+        });
+    }
+    else
+    {
+        next();
+    }
+});
 
 var User = mongoose.model('User', UserSchema);
 
